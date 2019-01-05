@@ -5,6 +5,38 @@ const port = 5000;
 const server = express();
 server.use(express.json());
 
+// Custom middleware
+function logger(req, res, next) {
+  console.log(
+    `[${new Date().toISOString()}] ${req.method} to ${req.url} ${req.get(
+      'Origin'
+    )}`
+  );
+  next();
+}
+
+function atGate(req, res, next) {
+  console.log('At the gate, about to be eaten.');
+  next();
+}
+
+function auth(req, res, next) {
+  if (req.url === '/mellon') {
+    next();
+  } else {
+    res.send('You shall not pass.');
+  }
+}
+
+server.use(logger);
+server.use(atGate);
+
+server.get('/mellon', auth, (req, res) => {
+  console.log('Gate opening...');
+  console.log('Inside and safe!');
+  res.send('Welcome traveller!');
+});
+
 // Get data
 server.get('/hobbits', (req, res) => {
   console.log(req.query);
@@ -78,6 +110,10 @@ server.delete('/hobbits/:id', (req, res) => {
     url: `/hobbits/${id}`,
     operation: `DELETE for hobbit with id ${id}`
   });
+});
+
+server.use(function(req, res) {
+  res.status(404).send("Ain't no one got time for that!");
 });
 
 server.listen(port, () => {
